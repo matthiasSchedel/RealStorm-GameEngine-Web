@@ -1,0 +1,48 @@
+<!-- 
+@Author: Matthias Schedel
+@Mail: matze.schedel@gmail.com
+-->
+<html>
+<head>
+    <meta content="text/html;charset=utf-8" http-equiv="Content-Type">
+    <meta content="utf-8" http-equiv="encoding">
+    <link rel="stylesheet" href="style.css" type="text/css" media="all">
+</head>
+<body>
+    <div class="container">
+    <!-- #region Pixel-Tool -->
+        <div class="sub_container">
+        <h1>RealStorm Pixel-Tool</h1>
+        <span style="display: block;">Hold down alt and click to select color under cursor in a pixel cell</span>
+        <span style="display: block;"> Width:<input id="width_value" placeholder="64" type="value" /> </span>
+        <span style="display: block;"> Height:<input id="height_value" placeholder="64" type="value" /> </span>
+        <button onclick="PixelEditor.CreateNewImage('pixel_canvas',id_('width_value').value,id_('height_value').value)">Create New Image</button>
+        <button onclick="PixelEditor.CreateObject1(0)">Create Object</button>
+        <button onclick="PixelEditor.CreateObject2(0)">Create Object from Image</button>
+        <span style="display: block;"> Name:<input id="object_name" placeholder="GameObject" type="text" /> </span>
+        <span style="display: block;">  Selected Color: <div id="selected_pixel" style="vertical-align:5%;" class="pixel"></div></span>
+        <span style="display: block;"> Selected Background Color: <div id="selected_background_pixel" style="vertical-align:5%;" class="pixel"></div></span>
+        <div id="pixel_canvas" class="pixel_canvas"></div>
+        <div id="color_palette" class="pixel_canvas"></div>
+        </div>
+    <!-- #endregion -->
+    <!-- #region Editor -->
+        <div class="sub_container" style="width:650px;">
+                <h1>RealStorm Editor</h1>
+                <div id="my_canvas">
+                    <svg id="my_svg" onclick="RealStormEngine.Click(evt);" width="640" height="640"></svg>
+                </div>
+        </div>
+    <!-- #endregion -->
+    <!-- #region Objects -->
+        <div class="sub_container">
+                <h1>RealStorm Editor List</h1>
+                <ul id="object_list">
+                    <li>Gameobject 0 (Placeholder)</li>
+                </ul>
+        </div>
+    <!-- #endregion -->
+    </div>
+    <script type="text/javascript" src="script.js"></script>
+</body>
+</html>
