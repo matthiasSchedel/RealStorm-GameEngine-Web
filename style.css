@@ -1,0 +1,68 @@
+div.container { display: flex; }
+div.sub_container { min-width: 12%; padding-right:2px; padding-left:2px;}
+div.pixel_row
+{
+    margin: 2px 0 0 0;
+    display: block;
+}
+div.pixel_canvas
+{
+    padding: 4px;
+    display:block;
+    background: lightblue;
+}
+button {
+    background: lightgreen;
+}
+div.pixel 
+{
+    width:10px;
+    height:10px;
+    margin: -0px -0px -3px -1px;
+    border: 1px solid;
+    color: 'white';
+    display: inline-block;
+}
+button.gameObject
+{
+    width:5px;
+}
+input[type=value] 
+{
+    width:30px;
+    display: inline-block;
+}
+input[type=range] 
+{
+    width:80px;
+    display: inline-block;
+    vertical-align: -50%;
+}
+ol {
+    background: #ff9999;
+    padding: 20px;
+}
+
+ul {
+    background: #3399ff;
+    padding: 20px;
+}
+
+ol li {
+    background: #ffe5e5;
+    padding: 5px;
+    margin-left: 35px;
+}
+
+ul li {
+    background: #cce5ff;
+    margin: 5px;
+}
+#my_canvas { border: 1px black solid; background: rgb(178, 196, 202);}
+table
+{
+    border: black 1px solid;
+    display: block;
+}
+
+body { background: darkolivegreen; }
