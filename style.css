@@ -58,7 +58,7 @@ ol li {
     padding: 5px;
     margin-left: 35px;
 }
-
+svg { width:100%; }
 ul li {
     background: #cce5ff;
     margin: 5px;

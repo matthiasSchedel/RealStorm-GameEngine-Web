@@ -20,15 +20,27 @@
         <button onclick="PixelEditor.CreateObject1(0)">Create Object</button>
         <button onclick="PixelEditor.CreateObject2(0)">Create Object from Image</button>
         <span style="display: block;"> Name:<input id="object_name" placeholder="GameObject" type="text" /> </span>
+        <button onclick="SaveObject(id_('object_name').value);">SaveObject</button>
+        <button onclick="LoadObject(id_('object_name').value);">LoadObject</button>
         <span style="display: block;">  Selected Color: <div id="selected_pixel" style="vertical-align:5%;" class="pixel"></div></span>
         <span style="display: block;"> Selected Background Color: <div id="selected_background_pixel" style="vertical-align:5%;" class="pixel"></div></span>
         <div id="pixel_canvas" class="pixel_canvas"></div>
         <div id="color_palette" class="pixel_canvas"></div>
+        <div id="script_editor" >
+            <button onclick="run();">Set Script</button>
+            <textarea cols="65" rows="25"id="cnsl"></textarea>
+           
+        </div>
         </div>
     <!-- #endregion -->
     <!-- #region Editor -->
         <div class="sub_container" style="width:650px;">
                 <h1>RealStorm Editor</h1>
+                <span style="display: block;"> Scene Name:<input id="scene_name" placeholder="Scene01" type="text" /> </span>
+                <button onclick="SaveScene(id_('scene_name').value);">SaveScene</button>
+                <button onclick="LoadScene(id_('scene_name').value);">LoadScene</button>
+                <button onclick="Play();">Play</button>
+                <button onclick="Pause();">Pause</button>
                 <div id="my_canvas">
                     <svg id="my_svg" onclick="RealStormEngine.Click(evt);" width="640" height="640"></svg>
                 </div>

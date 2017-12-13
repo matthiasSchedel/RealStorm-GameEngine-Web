@@ -5,6 +5,54 @@
 
 var id_ = function (i) { return document.getElementById(i); }
 var class_ = function (c) { return document.getElementsByClassName(c)[0]; }
+var player = null;
+var lastMove = 37;
+var projectile = null;
+var projectiles = [];
+var Load = function()
+{
+ if (localStorage.key('test'))
+    {
+        console.log('object does exist')
+        var obj = JSON.parse(localStorage.getItem('test'));
+    } else 
+    {
+        console.log('object does not exist')
+        localStorage.setItem('test', JSON.stringify({"name":"test"}));
+    }
+}
+
+var SaveScene = function(scene_name)
+{
+    localStorage.setItem(scene_name, JSON.stringify(
+        {
+        "svg":id_('my_svg').innerHTML,
+        "list":id_('object_list').innerHTML,
+        "gameObjects":RealStormEngine.my_gameObject,
+        "script":id('cnsl').value
+    }
+    ));
+}
+var LoadScene = function(scene_name)
+{
+    if (localStorage.key(scene_name)) 
+    {
+        id('cnsl').value = JSON.parse(localStorage.getItem(scene_name)).script;
+        id_('my_svg').innerHTML = JSON.parse(localStorage.getItem(scene_name)).svg;
+        id_('object_list').innerHTML = JSON.parse(localStorage.getItem(scene_name)).list;
+        RealStormEngine.my_gameObjects = JSON.parse(localStorage.getItem(scene_name)).gameObjects;
+        
+    }
+}
+
+var SaveObject = function(object_name)
+{
+    localStorage.setItem(object_name, JSON.stringify({"value":id_('pixel_canvas').innerHTML}));
+}
+var LoadObject = function(object_name)
+{
+    if (localStorage.key(object_name)) id_('pixel_canvas').innerHTML = JSON.parse(localStorage.getItem(object_name)).value;
+}
 
 var RealStormEngine =
     {
@@ -69,27 +117,42 @@ var PixelEditor =
     ]
 }
 
+
+function run() {
+    var el = document.getElementById('cnsl');
+    var scriptText = el.value;
+    var oldScript = document.getElementById('scriptContainer');
+    var newScript;
+
+    if (oldScript) {
+      oldScript.parentNode.removeChild(oldScript);
+    }
+    newScript = document.createElement('script');
+    newScript.id = 'scriptContainer';
+    newScript.text = el.value;
+    document.body.appendChild(newScript);
+} 
+
 class GameObject {
     constructor(transform, name, id, x, y) {
-        
-        //var o = new GameObject(g.el,g.name,RealStormEngine.my_gameObjects.length,0,0);
-        //RealStormEngine.my_gameObjects.push(o);
-        //
-        //console.log("tf",transform);
         this.SetName(name);
         this.name = name;
-        //this.SetTransform(transform);
         this.SetId(id);
         this.layer = 1;
         this.x = 0;
         this.y = 0;
+        this.scaleX = 1;
+        this.scaleY = 1;
         this.order = id;
-        
-
-        //this.Transform(x,y);
     }
     Duplicate() {
 
+    }
+    Scale(x,y)
+    {
+        this.scaleX = x;
+        this.scaleY = y;
+        id_('group_'+this.id).setAttribute('transform', 'translate(' + this.x + ',' + this.y + ') scale('+this.scaleX+','+this.scaleY+')');
     }
     Delete() {
 
@@ -98,7 +161,7 @@ class GameObject {
     Transform(x,y) {
         this.x = x;
         this.y = y;
-        id_('group_'+this.id).setAttribute('transform', 'translate(' + this.x + ',' + this.y + ')');
+        id_('group_'+this.id).setAttribute('transform', 'translate(' + this.x + ',' + this.y + ') scale('+this.scaleX+','+this.scaleY+')');
         // 3,4,5,6
         var toChange = id_('object_'+this.id).childNodes;
         //console.log('check',toChange);
@@ -120,11 +183,7 @@ class GameObject {
     SetName(value) { this.name = value; }
     GetLayer() {return this.layer;}
     SetLayer(value) { 
-        //if (this.layer == value) return;
-        //RealStormEngine.Layers[this.layer - 1][this.id] = null;
         this.layer = parseInt(value); 
-        //RealStormEngine.Layers[this.layer - 1][this.id] = this.name;
-        //console.log('layers',RealStormEngine.Layers);
         RealStormEngine.UpdateLayers();
     }
 }
@@ -175,11 +234,11 @@ PixelEditor.CreateObject2 = function (a) {
     var g =
         {
             el: document.getElementById('pixel_canvas').innerHTML,
-            name: (id_('object_name').value + (RealStormEngine.gameObjects.length))
+            name: (id_('object_name').value + (RealStormEngine.my_gameObjects.length))
         };
         // transform, id, x, y 
-       RealStormEngine.SelectedGameObject = new GameObject(g.el,g.name,RealStormEngine.my_gameObjects.length,0,0);
-       RealStormEngine.my_gameObjects.push(RealStormEngine.SelectedGameObject);
+       
+       RealStormEngine.my_gameObjects.push(new GameObject(g.el,g.name,RealStormEngine.my_gameObjects.length,0,0));
        PixelEditor.CreateObjectFromCanvas(g.el,g.name,RealStormEngine.my_gameObjects.length-1);
     //PixelEditor.CreateObjectFromCanvas(g);
 }
@@ -213,42 +272,25 @@ RealStormEngine.OnObjectClick = function(ev)
     console.log("test");
 }
 PixelEditor.CreateObjectFromCanvas = function (tf, name,id) {
-    //var id = RealStormEngine.gameObjects.length;
     var g = PixelEditor.CreateTransform(id);
     console.log("r_o",RealStormEngine.my_gameObjects)
     
     PixelEditor.CreateListElement(name,id);
-    //group_id, id, name, x, y, list_id, 
-    //var x = new GameObject();
-    //RealStormEngine.gameObjects.push(g);
     RealStormEngine.editor.my_svg.appendChild(g);
-    //RealStormEngine.my_gameObjects.push(RealStormEngine.SelectedGameObject);
-    //console.log("obj",RealStormEngine.my_gameObjects);
     id_('group_' + id).addEventListener('onclick', RealStormEngine.OnObjectClick);
-    //id_('layer_2').appendChild(g);
-    //var id = RealStormEngine.gameObjects.length - 1;
-    
     RealStormEngine.editor.my_svg.innerHTML += "";
-    //RealStormEngine.my_gameObjects[id].SetTransform(g);
-
 }
 
 RealStormEngine.UpdateLayers = function()
 {
-    //var first = my_svg.removeChild(my_svg.childNodes[0]);
-     //   my_svg.appendChild(first);
-        
-        
     var nodes = [];
     var setLayer = 0;
     for (var i = 2; i < 4; i++) {
         for(var j = 0;j < RealStormEngine.my_gameObjects.length;j++)
         {   
             var g = RealStormEngine.my_gameObjects[j];
-            //console.log("layer",RealStormEngine.my_gameObjects, g.layer);
             if (g.layer == i) 
             {
-                //console.log("id:",g.id,"order",g.order)
                  var first = my_svg.removeChild(my_svg.childNodes[g.id]);
                  my_svg.appendChild(first);
                  my_svg.innerHTML += "";
@@ -260,20 +302,9 @@ RealStormEngine.UpdateLayers = function()
     for (i = 0; i < my_svg.childNodes.length;i++)
     {
         console.log(my_svg.childNodes[i].id);
-        //console.log();
         RealStormEngine.my_gameObjects[my_svg.childNodes[i].id.substring(6,my_svg.childNodes[i].id.length)].order = i;
     }
-    //my_svg.childNodes = [];
-    /*while(nodes.length > 0)
-        {   
-            my_svg.childNodes.appendChild(n.pop());
-        }
-    my_svg.innerHTML += "";*/
-    //nodes = [];
 }
-
-
-
 
 var my_svg = id_("my_svg");
 RealStormEngine.editor = {
@@ -311,7 +342,6 @@ RealStormEngine.AddInputHandler2 = function (name, i) {
         + 'layer:<select onchange="RealStormEngine.ChangeLayer(' + i + ',this.value)"> <option>1</option><option>2</option> <option>3</option></select>'
 }
 RealStormEngine.ChangeLayer = function (i,layer) {
-    //console.log("change layer", );
     RealStormEngine.my_gameObjects[i].SetLayer(layer);
 
 }
@@ -323,27 +353,19 @@ RealStormEngine.DuplicateObject = function (i) {
     var toDup = RealStormEngine.my_gameObjects[i];
     var l = document.createElement('li')
     l.setAttribute('id', 'object_' + RealStormEngine.my_gameObjects.length);
-    //l.innerHTML = RealStormEngine.AddInputHandler2("duplicate", RealStormEngine.gameObjects.length);
     l.innerHTML = RealStormEngine.AddInputHandler2(toDup.GetName(), RealStormEngine.my_gameObjects.length);
     id_("object_list").appendChild(l);
     var g = id_('group_'+i).cloneNode(true);
     g.setAttribute('id', 'group_' + RealStormEngine.my_gameObjects.length);
-    
     var o = new GameObject(g,toDup.GetName, RealStormEngine.my_gameObjects.length,0,0);
     RealStormEngine.my_gameObjects.push(o);
     my_svg.appendChild(g);
     RealStormEngine.editor.my_svg.innerHTML += "";
+    return o;
 }
 RealStormEngine.TransformX = function (i, x) {
     console.log('obj',RealStormEngine.my_gameObjects,'i',i);
     RealStormEngine.my_gameObjects[i].SetX(x);
-    /*var y = 0;
-    if (id_('group_' + i).getAttribute('transform')) {
-        y = id_('group_' + i).getAttribute('transform').split(',')[1].split(')')[0];
-        //console.log("y->", y);
-    }
-    */
-    //id_('group_' + i).setAttribute('transform', 'translate(' + x + ',' + y + ')');
 }
 RealStormEngine.ResetObject = function(i)
 {
@@ -351,12 +373,6 @@ RealStormEngine.ResetObject = function(i)
 }
 RealStormEngine.TransformY = function (i, y) {
     RealStormEngine.my_gameObjects[i].SetY(y);
-    /* var x = 0;
-    if (id_('group_' + i).getAttribute('transform')) {
-        x = id_('group_' + i).getAttribute('transform').split('(')[1].split(',')[0];
-        //console.log("x->", x);
-    }
-    id_('group_' + i).setAttribute('transform', 'translate(' + x + ',' + y + ')');*/
 }
 RealStormEngine.CreateRect = function (g, color, x, y) {
     color = color || 'white';
@@ -373,6 +389,51 @@ RealStormEngine.CreateRect = function (g, color, x, y) {
     rect.setAttributeNS(null, 'fill', c.toString());
     g.appendChild(rect);
 }
+
+var fire = function(direction) 
+{
+    var proj = RealStormEngine.DuplicateObject(1);
+    proj.Transform(player.GetX(),player.GetY());
+    if (player.scaleX == -1) proj.Transform(proj.x-70,proj.y);
+    var move = {x:0,y:0};
+        if (direction == 37) {move.x=-10; }
+        else if (direction == 39) {move.x=10;  }
+        else if (direction == 38) {move.y=-10; }
+        else if (direction == 40) { move.y=10;  }
+    
+    projectiles.push({move:move,p:proj});
+}
+var playerSet = 
+{
+    acceleration:0,
+    gravity:0.91,
+    jumpPower:-13,
+    moveSpeed:10,
+    dir:0
+};
+Update = function()
+{
+    if (player) {
+    if(player.y < 500)
+    {
+        playerSet.acceleration += playerSet.gravity;
+    } else 
+    {
+        player.Transform(player.x,500);
+        playerSet.acceleration = 0;
+
+    }
+    if (playerSet.dir == 37) { player.SetX(player.x-2*playerSet.moveSpeed); }
+    else if (playerSet.dir == 39) { player.SetX(player.x+2*playerSet.moveSpeed); }
+    player.Transform(player.x,player.y + playerSet.acceleration);
+    
+    projectiles.forEach(e => e.p.Transform((e.move.x == 0) ? e.p.x : e.p.x + e.move.x,(e.move.y == 0) ? e.p.y : e.p.y + e.move.y));
+}
+}
+var Flip = function()
+{
+    player.Scale(player.scaleX *= -1, player.scaleY); player.Transform(player.x - player.scaleX*40,player.y);
+}
 //#BEGIN REGION keys
 with(window) {
     onload = function (e) {
@@ -382,9 +443,25 @@ with(window) {
         id_('selected_background_pixel').style.background = PixelEditor.selectedBackgroundColor;
     }
     onkeydown = function (e) {
+        if (player) 
+        {
+            console.log("key:",e.keyCode);
+            if (e.keyCode == 37 && playerSet.dir == 0) { if(player.scaleX == 1) {Flip();};playerSet.dir = 37; lastMove = 37; }
+            else if (e.keyCode == 39 && playerSet.dir == 0) { if(player.scaleX == -1) {Flip();};playerSet.dir = 39; lastMove = 39; }
+            if (e.keyCode == 38) { /* player.SetY(player.y-10); lastMove = 38; */}
+            if (e.keyCode == 38 && player.y == 500) { e.preventDefault(); player.Transform(player.x,player.y - 2); playerSet.acceleration = playerSet.jumpPower;console.log("set",playerSet.acceleration); /* player.SetY(player.y+10); lastMove = 40;*/ }
+         //if (e.keyCode == 82) { F Key}
+            if (e.keyCode == 40)
+            {
+                e.preventDefault();
+                fire(lastMove);
+            }
+        }
         if (e.keyCode == 18) PixelEditor.altkeydown = true;
     }
     onkeyup = function (e) {
+        if (e.keyCode == 37 && playerSet.dir == 37) { playerSet.dir =0; }
+        else if (e.keyCode == 39 && playerSet.dir == 39) { playerSet.dir =0; }
         if (e.keyCode == 18) PixelEditor.altkeydown = false;
     }
     onmousedown = function (e) {
@@ -395,5 +472,11 @@ with(window) {
         if (e.button == 0) PixelEditor.leftmousedown = false;
         if (e.button == 2) PixelEditor.rightmousedown = false;
     }
+
 }
+
+setInterval(function() {
+    Update();
+  }, 50);
+//#endregion keys
 Run();
