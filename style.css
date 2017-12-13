@@ -1,3 +1,8 @@
+/*
+* @Author: Matthias Schedel
+* @Mail: matze.schedel@gmail.com
+*/
+
 div.container { display: flex; }
 div.sub_container { min-width: 12%; padding-right:2px; padding-left:2px;}
 div.pixel_row

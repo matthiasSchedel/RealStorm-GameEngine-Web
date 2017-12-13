@@ -3,8 +3,12 @@
 * @Mail: matze.schedel@gmail.com
 */
 
+var id_ = function (i) { return document.getElementById(i); }
+var class_ = function (c) { return document.getElementsByClassName(c)[0]; }
+
 var RealStormEngine =
     {
+        SelectedGameObject:null,
         gameObjects: [],
         my_gameObjects: [],
         debug: false,
@@ -66,11 +70,23 @@ var PixelEditor =
 }
 
 class GameObject {
-    constructor(name, layer, x, y) {
+    constructor(transform, name, id, x, y) {
+        
+        //var o = new GameObject(g.el,g.name,RealStormEngine.my_gameObjects.length,0,0);
+        //RealStormEngine.my_gameObjects.push(o);
+        //
+        //console.log("tf",transform);
         this.SetName(name);
-        this.layer = layer;
-        this.x = x;
-        this.y = y;
+        this.name = name;
+        //this.SetTransform(transform);
+        this.SetId(id);
+        this.layer = 1;
+        this.x = 0;
+        this.y = 0;
+        this.order = id;
+        
+
+        //this.Transform(x,y);
     }
     Duplicate() {
 
@@ -78,25 +94,48 @@ class GameObject {
     Delete() {
 
     }
+    Reset() { this.Transform(0,0) }
     Transform(x,y) {
-        this.x += x;
-        this.y += y;
-    }
+        this.x = x;
+        this.y = y;
+        id_('group_'+this.id).setAttribute('transform', 'translate(' + this.x + ',' + this.y + ')');
+        // 3,4,5,6
+        var toChange = id_('object_'+this.id).childNodes;
+        //console.log('check',toChange);
+        toChange[5].value = x;
+        toChange[6].value = x;
+        toChange[8].value = y;
+        toChange[9].value = y;
 
+    }
+    GetX() { return this.x; }
+    SetX(value) { this.Transform(value,this.y); }
+    GetY() { return this.y; }
+    SetY(value) { this.Transform(this.x,value); }
+    GetId() { return this.id; }
+    SetId(value) { this.id = value; }
+    GetTransform() { return this.transform; }
+    SetTransform(value) { this.transform = value; }
     GetName() { return this.name; }
     SetName(value) { this.name = value; }
-    GetLayer() { return this.layer; }
-    SetLayer(value) { this.layer = value; }
+    GetLayer() {return this.layer;}
+    SetLayer(value) { 
+        //if (this.layer == value) return;
+        //RealStormEngine.Layers[this.layer - 1][this.id] = null;
+        this.layer = parseInt(value); 
+        //RealStormEngine.Layers[this.layer - 1][this.id] = this.name;
+        //console.log('layers',RealStormEngine.Layers);
+        RealStormEngine.UpdateLayers();
+    }
 }
 Run = function()
 {
-    var a = new GameObject('my_name',1,0,0);
-    console.log("go",a);
-    console.log('name',a.GetName());
+    //var a = new GameObject('my_name',1,0,0);
+    //console.log("go",a);
+    //console.log('name',a.GetName());
 }
 
-id_ = function (i) { return document.getElementById(i); }
-class_ = function (c) { return document.getElementsByClassName(c)[0]; }
+
 
 PixelEditor.SetSelected = function (s) {
     console.log("set ", s);
@@ -111,21 +150,9 @@ PixelEditor.ClickColor = function (c) {
 }
 
 PixelEditor.ApplyColor = function (c) {
-    //console.log("color",c);
-    //c.style.fill = 'blue';
-    //c.style.color = 'red';
-    /*if (PixelEditor.rightmousedown) { c.style.background = 'white'; }
-    else */if (PixelEditor.leftmousedown) c.style.background = PixelEditor.selectedColor;
+    if (PixelEditor.leftmousedown) c.style.background = PixelEditor.selectedColor;
+}
 
-}
-PixelEditor.CreateObject2 = function (a) {
-    var g =
-        {
-            el: document.getElementById('pixel_canvas').innerHTML,
-            name: (id_('object_name').value + (RealStormEngine.gameObjects.length + 1))
-        };
-    PixelEditor.CreateObjectFromCanvas(g);
-}
 PixelEditor.CreateNewImage = function (sel, width, height) {
     var ppc = id_(sel);
     var image = "";
@@ -144,7 +171,20 @@ PixelEditor.CreateNewImage = function (sel, width, height) {
     ppc.innerHTML = image;
 }
 
-PixelEditor.CreateTransform = function(o,id)
+PixelEditor.CreateObject2 = function (a) {
+    var g =
+        {
+            el: document.getElementById('pixel_canvas').innerHTML,
+            name: (id_('object_name').value + (RealStormEngine.gameObjects.length))
+        };
+        // transform, id, x, y 
+       RealStormEngine.SelectedGameObject = new GameObject(g.el,g.name,RealStormEngine.my_gameObjects.length,0,0);
+       RealStormEngine.my_gameObjects.push(RealStormEngine.SelectedGameObject);
+       PixelEditor.CreateObjectFromCanvas(g.el,g.name,RealStormEngine.my_gameObjects.length-1);
+    //PixelEditor.CreateObjectFromCanvas(g);
+}
+
+PixelEditor.CreateTransform = function(id)
 {
     var p = document.getElementById('pixel_canvas');
     var g = document.createElementNS(my_svg, "g");
@@ -159,11 +199,12 @@ PixelEditor.CreateTransform = function(o,id)
     }
     return g;
 }
-PixelEditor.CreateListElement = function(o)
+PixelEditor.CreateListElement = function(name,id)
 {
+    console.log("Id",id);
     var l = document.createElement('li')
-    l.setAttribute('id', 'object_' + RealStormEngine.gameObjects.length);
-    l.innerHTML = RealStormEngine.AddInputHandler2(o.name, RealStormEngine.gameObjects.length);
+    l.setAttribute('id', 'object_' + id);
+    l.innerHTML = RealStormEngine.AddInputHandler2(name, id);
     id_("object_list").appendChild(l);
 }
 
@@ -171,25 +212,64 @@ RealStormEngine.OnObjectClick = function(ev)
 {
     console.log("test");
 }
-PixelEditor.CreateObjectFromCanvas = function pixels(o) {
-    var id = RealStormEngine.gameObjects.length;
-    var g = PixelEditor.CreateTransform(o,id);
-    PixelEditor.CreateListElement(o);
+PixelEditor.CreateObjectFromCanvas = function (tf, name,id) {
+    //var id = RealStormEngine.gameObjects.length;
+    var g = PixelEditor.CreateTransform(id);
+    console.log("r_o",RealStormEngine.my_gameObjects)
+    
+    PixelEditor.CreateListElement(name,id);
     //group_id, id, name, x, y, list_id, 
-    var x = new GameObject();
-    RealStormEngine.gameObjects.push(g);
+    //var x = new GameObject();
+    //RealStormEngine.gameObjects.push(g);
     RealStormEngine.editor.my_svg.appendChild(g);
+    //RealStormEngine.my_gameObjects.push(RealStormEngine.SelectedGameObject);
+    //console.log("obj",RealStormEngine.my_gameObjects);
     id_('group_' + id).addEventListener('onclick', RealStormEngine.OnObjectClick);
     //id_('layer_2').appendChild(g);
-    var id = RealStormEngine.gameObjects.length - 1;
+    //var id = RealStormEngine.gameObjects.length - 1;
     
     RealStormEngine.editor.my_svg.innerHTML += "";
+    //RealStormEngine.my_gameObjects[id].SetTransform(g);
 
 }
 
 RealStormEngine.UpdateLayers = function()
 {
-    
+    //var first = my_svg.removeChild(my_svg.childNodes[0]);
+     //   my_svg.appendChild(first);
+        
+        
+    var nodes = [];
+    var setLayer = 0;
+    for (var i = 2; i < 4; i++) {
+        for(var j = 0;j < RealStormEngine.my_gameObjects.length;j++)
+        {   
+            var g = RealStormEngine.my_gameObjects[j];
+            //console.log("layer",RealStormEngine.my_gameObjects, g.layer);
+            if (g.layer == i) 
+            {
+                //console.log("id:",g.id,"order",g.order)
+                 var first = my_svg.removeChild(my_svg.childNodes[g.id]);
+                 my_svg.appendChild(first);
+                 my_svg.innerHTML += "";
+            }
+        }
+    }   
+    my_svg.innerHTML += "";
+    console.log(my_svg.childNodes);
+    for (i = 0; i < my_svg.childNodes.length;i++)
+    {
+        console.log(my_svg.childNodes[i].id);
+        //console.log();
+        RealStormEngine.my_gameObjects[my_svg.childNodes[i].id.substring(6,my_svg.childNodes[i].id.length)].order = i;
+    }
+    //my_svg.childNodes = [];
+    /*while(nodes.length > 0)
+        {   
+            my_svg.childNodes.appendChild(n.pop());
+        }
+    my_svg.innerHTML += "";*/
+    //nodes = [];
 }
 
 
@@ -216,8 +296,6 @@ RealStormEngine.DeleteObject = function (i) {
 RealStormEngine.Click = function (i) {
     if (i.originalTarget.localName == 'rect') {
         console.log(i.originalTarget.parentNode);
-        //i.originalTarget.parentNode.setAttributeNS(null, 'z-index', 0);
-        //i.originalTarget.parentNode.setAttribute('z-index', 0);
         var first = my_svg.removeChild(my_svg.childNodes[0]);
         my_svg.appendChild(first);
         my_svg.innerHTML += "";
@@ -227,39 +305,58 @@ RealStormEngine.Click = function (i) {
 RealStormEngine.AddInputHandler2 = function (name, i) {
     return name + '<button class="gameObject" onclick="RealStormEngine.DeleteObject(' + i + ')">X</button>' +
         '<button class="gameObject" onclick="RealStormEngine.DuplicateObject(' + i + ')">D</button>' +
-        ' - x:<input value="' + (this.value || 0) + '" onchange="RealStormEngine.TransformX(' + i + ',this.value)" type="value" />' + '<input onmousemove="RealStormEngine.TransformX(' + i + ',this.value)" value="0" min="0" max="600" type="range"/>' +
-        'y:<input value="' + (this.value || 0.0) + '" onchange="RealStormEngine.TransformY(' + i + ',this.value)" type="value" />' + '<input onmousemove="RealStormEngine.TransformY(' + i + ',this.value)" value="0" min="0" max="600" type="range"/>'
-        + 'layer:<select onchange="RealStormEngine.ChangeLayer(this)"> <option>1</option><option>2</option> <option>3</option></select>'
+        '<button class="gameObject" onclick="RealStormEngine.ResetObject(' + i + ')">R</button>' +
+        ' - x:<input value="' + (this.value || 0) + '" onchange="RealStormEngine.TransformX(' + i + ',this.value)" type="value" />' + '<input onmousemove="RealStormEngine.TransformX(' + i + ',this.value)" value="0" min="-600" max="1200" type="range"/>' +
+        'y:<input value="' + (this.value || 0.0) + '" onchange="RealStormEngine.TransformY(' + i + ',this.value)" type="value" />' + '<input onmousemove="RealStormEngine.TransformY(' + i + ',this.value)" value="0" min="-600" max="1200" type="range"/>'
+        + 'layer:<select onchange="RealStormEngine.ChangeLayer(' + i + ',this.value)"> <option>1</option><option>2</option> <option>3</option></select>'
 }
-RealStormEngine.ChangeLayer = function (evt) {
-    console.log("change layer", evt);
+RealStormEngine.ChangeLayer = function (i,layer) {
+    //console.log("change layer", );
+    RealStormEngine.my_gameObjects[i].SetLayer(layer);
+
 }
 RealStormEngine.DuplicateObject = function (i) {
+    console.log("Reset Object",i);
+
+}
+RealStormEngine.DuplicateObject = function (i) {
+    var toDup = RealStormEngine.my_gameObjects[i];
     var l = document.createElement('li')
-    l.setAttribute('id', 'object_' + RealStormEngine.gameObjects.length);
-    l.innerHTML = RealStormEngine.AddInputHandler2("duplicate", RealStormEngine.gameObjects.length);
+    l.setAttribute('id', 'object_' + RealStormEngine.my_gameObjects.length);
+    //l.innerHTML = RealStormEngine.AddInputHandler2("duplicate", RealStormEngine.gameObjects.length);
+    l.innerHTML = RealStormEngine.AddInputHandler2(toDup.GetName(), RealStormEngine.my_gameObjects.length);
     id_("object_list").appendChild(l);
-    var g = RealStormEngine.gameObjects[i].cloneNode(true);
-    g.setAttribute('id', 'group_' + RealStormEngine.gameObjects.length);
-    RealStormEngine.gameObjects.push(g);
+    var g = id_('group_'+i).cloneNode(true);
+    g.setAttribute('id', 'group_' + RealStormEngine.my_gameObjects.length);
+    
+    var o = new GameObject(g,toDup.GetName, RealStormEngine.my_gameObjects.length,0,0);
+    RealStormEngine.my_gameObjects.push(o);
     my_svg.appendChild(g);
     RealStormEngine.editor.my_svg.innerHTML += "";
 }
 RealStormEngine.TransformX = function (i, x) {
-    var y = 0;
+    console.log('obj',RealStormEngine.my_gameObjects,'i',i);
+    RealStormEngine.my_gameObjects[i].SetX(x);
+    /*var y = 0;
     if (id_('group_' + i).getAttribute('transform')) {
         y = id_('group_' + i).getAttribute('transform').split(',')[1].split(')')[0];
-        console.log("y->", y);
+        //console.log("y->", y);
     }
-    id_('group_' + i).setAttribute('transform', 'translate(' + x + ',' + y + ')');
+    */
+    //id_('group_' + i).setAttribute('transform', 'translate(' + x + ',' + y + ')');
+}
+RealStormEngine.ResetObject = function(i)
+{
+    RealStormEngine.my_gameObjects[i].Reset();
 }
 RealStormEngine.TransformY = function (i, y) {
-    var x = 0;
+    RealStormEngine.my_gameObjects[i].SetY(y);
+    /* var x = 0;
     if (id_('group_' + i).getAttribute('transform')) {
         x = id_('group_' + i).getAttribute('transform').split('(')[1].split(',')[0];
-        console.log("x->", x);
+        //console.log("x->", x);
     }
-    id_('group_' + i).setAttribute('transform', 'translate(' + x + ',' + y + ')');
+    id_('group_' + i).setAttribute('transform', 'translate(' + x + ',' + y + ')');*/
 }
 RealStormEngine.CreateRect = function (g, color, x, y) {
     color = color || 'white';
