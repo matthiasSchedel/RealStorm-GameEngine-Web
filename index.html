@@ -10,7 +10,6 @@
 </head>
 <body>
     <div class="container">
-    <!-- #region Pixel-Tool -->
         <div class="sub_container">
         <h1>RealStorm Pixel-Tool</h1>
         <span style="display: block;">Hold down alt and click to select color under cursor in a pixel cell</span>
@@ -28,12 +27,12 @@
         <div id="color_palette" class="pixel_canvas"></div>
         <div id="script_editor" >
             <button onclick="run();">Set Script</button>
-            <textarea cols="65" rows="25"id="cnsl"></textarea>
-           
+            <textarea cols="65" rows="25"id="cnsl">
+                player = RealStormEngine.my_gameObjects[0];
+                projectile = RealStormEngine.my_gameObjects[1];
+            </textarea>
         </div>
         </div>
-    <!-- #endregion -->
-    <!-- #region Editor -->
         <div class="sub_container" style="width:650px;">
                 <h1>RealStorm Editor</h1>
                 <span style="display: block;"> Scene Name:<input id="scene_name" placeholder="Scene01" type="text" /> </span>
@@ -45,15 +44,11 @@
                     <svg id="my_svg" onclick="RealStormEngine.Click(evt);" width="640" height="640"></svg>
                 </div>
         </div>
-    <!-- #endregion -->
-    <!-- #region Objects -->
         <div class="sub_container">
                 <h1>RealStorm Editor List</h1>
                 <ul id="object_list">
-      
                 </ul>
         </div>
-    <!-- #endregion -->
     </div>
     <script type="text/javascript" src="script.js"></script>
 </body>

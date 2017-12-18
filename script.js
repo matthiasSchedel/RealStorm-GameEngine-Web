@@ -6,6 +6,17 @@
 var id_ = function (i) { return document.getElementById(i); }
 var class_ = function (c) { return document.getElementsByClassName(c)[0]; }
 var player = null;
+var player_object = 
+{
+    animations:{
+    idle:[],
+    walking:[],
+    jumping:[]
+    },
+    max_health:100,
+    curr_health:100
+
+};
 var lastMove = 37;
 var projectile = null;
 var projectiles = [];
@@ -28,8 +39,8 @@ var SaveScene = function(scene_name)
         {
         "svg":id_('my_svg').innerHTML,
         "list":id_('object_list').innerHTML,
-        "gameObjects":RealStormEngine.my_gameObject,
-        "script":id('cnsl').value
+        "gameObjects":RealStormEngine.my_gameObjects,
+        "script":id_('cnsl').value.toString()
     }
     ));
 }
@@ -37,7 +48,7 @@ var LoadScene = function(scene_name)
 {
     if (localStorage.key(scene_name)) 
     {
-        id('cnsl').value = JSON.parse(localStorage.getItem(scene_name)).script;
+        id_('cnsl').value = JSON.parse(localStorage.getItem(scene_name)).script;
         id_('my_svg').innerHTML = JSON.parse(localStorage.getItem(scene_name)).svg;
         id_('object_list').innerHTML = JSON.parse(localStorage.getItem(scene_name)).list;
         RealStormEngine.my_gameObjects = JSON.parse(localStorage.getItem(scene_name)).gameObjects;
@@ -155,7 +166,12 @@ class GameObject {
         id_('group_'+this.id).setAttribute('transform', 'translate(' + this.x + ',' + this.y + ') scale('+this.scaleX+','+this.scaleY+')');
     }
     Delete() {
-
+        var elem = id_('object_' + this.id);
+        elem.parentNode.removeChild(elem);
+        var elem2 = id_('group_' + this.id);
+        elem2.parentNode.removeChild(elem2);
+        //RealStormEngine.my_gameObjects.splice(index, 1);
+        my_svg.innerHTML += "";
     }
     Reset() { this.Transform(0,0) }
     Transform(x,y) {
@@ -187,12 +203,7 @@ class GameObject {
         RealStormEngine.UpdateLayers();
     }
 }
-Run = function()
-{
-    //var a = new GameObject('my_name',1,0,0);
-    //console.log("go",a);
-    //console.log('name',a.GetName());
-}
+
 
 
 
@@ -317,11 +328,7 @@ RealStormEngine.editor = {
 RealStormEngine.editor.my_svg = id_("my_svg");
 
 RealStormEngine.DeleteObject = function (i) {
-    var elem = id_('object_' + i);
-    elem.parentNode.removeChild(elem);
-    var elem2 = id_('group_' + i);
-    elem2.parentNode.removeChild(elem2);
-    my_svg.innerHTML += "";
+    RealStormEngine.my_gameObjects[i].Delete();
 }
 
 RealStormEngine.Click = function (i) {
@@ -392,6 +399,7 @@ RealStormEngine.CreateRect = function (g, color, x, y) {
 
 var fire = function(direction) 
 {
+    PlaySound('shoot');
     var proj = RealStormEngine.DuplicateObject(1);
     proj.Transform(player.GetX(),player.GetY());
     if (player.scaleX == -1) proj.Transform(proj.x-70,proj.y);
@@ -411,6 +419,16 @@ var playerSet =
     moveSpeed:10,
     dir:0
 };
+
+Distance = function(obj1, obj2)
+{
+    //console.log("obj1",obj1.x,"obj2",obj2.x);
+    var a = obj1.x - obj2.x;
+    var b = obj1.y- obj2.y;
+    var c = Math.sqrt( a*a + b*b );
+    //console.log("distance",c);
+    return c;
+}
 Update = function()
 {
     if (player) {
@@ -427,14 +445,25 @@ Update = function()
     else if (playerSet.dir == 39) { player.SetX(player.x+2*playerSet.moveSpeed); }
     player.Transform(player.x,player.y + playerSet.acceleration);
     
-    projectiles.forEach(e => e.p.Transform((e.move.x == 0) ? e.p.x : e.p.x + e.move.x,(e.move.y == 0) ? e.p.y : e.p.y + e.move.y));
+    projectiles.forEach(function(e) { e.p.Transform((e.move.x == 0) ? e.p.x : e.p.x + e.move.x,(e.move.y == 0) ? e.p.y : e.p.y + e.move.y)});
+    projectiles.forEach( function(e, index, object) { if(Distance(e.p,player) > 800) { e.p.Delete(); object.splice(index, 1);} });
+
 }
 }
 var Flip = function()
 {
     player.Scale(player.scaleX *= -1, player.scaleY); player.Transform(player.x - player.scaleX*40,player.y);
 }
-//#BEGIN REGION keys
+
+var Jump = function(e)
+{
+    PlaySound('jump');
+    e.preventDefault(); 
+    player.Transform(player.x,player.y - 2); 
+    playerSet.acceleration = playerSet.jumpPower;
+    //console.log("set",playerSet.acceleration); 
+    /* player.SetY(player.y+10); lastMove = 40;*/ 
+}
 with(window) {
     onload = function (e) {
         PixelEditor.CreateNewImage("pixel_canvas", 8, 8);
@@ -448,9 +477,8 @@ with(window) {
             console.log("key:",e.keyCode);
             if (e.keyCode == 37 && playerSet.dir == 0) { if(player.scaleX == 1) {Flip();};playerSet.dir = 37; lastMove = 37; }
             else if (e.keyCode == 39 && playerSet.dir == 0) { if(player.scaleX == -1) {Flip();};playerSet.dir = 39; lastMove = 39; }
-            if (e.keyCode == 38) { /* player.SetY(player.y-10); lastMove = 38; */}
-            if (e.keyCode == 38 && player.y == 500) { e.preventDefault(); player.Transform(player.x,player.y - 2); playerSet.acceleration = playerSet.jumpPower;console.log("set",playerSet.acceleration); /* player.SetY(player.y+10); lastMove = 40;*/ }
-         //if (e.keyCode == 82) { F Key}
+            if (e.keyCode == 38) { }
+            if (e.keyCode == 38 && player.y == 500) { Jump(e); }
             if (e.keyCode == 40)
             {
                 e.preventDefault();
@@ -474,9 +502,17 @@ with(window) {
     }
 
 }
-
+function PlaySound(soundtype) {
+    var snd = new  Audio("data:audio/mp3;base64,"+sounds[soundtype]);
+    snd.volume = 0.3;
+    snd.play();
+}
+const sounds =
+{
+    shoot:"/+MYxAANAPraUUEwAHFCgAKeA//GYxjfkAHGNj8H4xjAAAAAwX4IEAgggUBAEAQDD//VLn/5R3BAEHf//VrB/B+KNSAXP/8//+MYxAcNsOb8yYF4APt//zT5v63T43zcvZDErGqWxneiKVf+nIkT//Ll22/rflxOSPZcgEnqBAFj3WW0qQAHSBZEAP///+o0/+MYxAsOSX8KWc0QASTC1hawq4xgkAW8mlRmSpwvF4vJN/////T6TyMoIgAQQZtxZHBXAxINNeGKfJKqA/jH/owA//1MqxmQ/+MYxAwOWUNGWVBIAjELhb+Fh5wqG5WJku62/+p//////xRAgQEAoYLiRU2QF0RKiBUidDolBqn//VX/QQQN1m4DPJBY0Aym/+MYxA0PybrsAY04ACkA7CCYPmLdBPT/o3cIBWw3B2pFMH5ZfuzLp+0xj9TyA+ZSYhEz8eO8pxzajDOeFf/0KgQq4km3IP/K/+MYxAgNKHr2WcIQAlKXMYBL7IYpQoKgqCoNA0DQNLBWDQNAqCv/iIGTsse//BoGf/g0DQKu//1A1UxBTUUzLjk5LjVVVVVV",
+    jump:"/+MYxAAMUI7YUUMQAFITT93d3NERERPN3d3/3DgYGBi3An8Tg4CAIBiCBT/5Q5/8QA+//+sH3//E59b//wQVLOWcs9dL/MhH/+MYxAkOKir4AY04AJSSixLmiGRv//0PFn8Mn/QXp/NLf8//3/lH/9Bs3/qLD+t/U+zqDch6OTOf4k9/WoGBAwRBtR////1G/+MYxAsPmg7tGc0oAEO4ZQLAlGrV///6lAUGBDiQov///8zggfD4ov///oZxIeKCYuD7//LBUyR//LBISExAZRWD+vhMRyMO/+MYxAcOCZsmWDgFIv/++3b6WCIAcaMAAART///9DhsOkz3/6PCjCwQOf/iUBC45z//KgqkyR/+Sg0LCw00qcAywaoIIXoB0/+MYxAkPgj8DGUoQAO//+lZ1Ua3NFUQguMb97fT/65RIJSN////1LUSYn////qUpSDiBI7/6BKdCoqf/+p6w0DIEIK+p///7/+MYxAYNYnq4AZFQABmBXazLwLRbMcyROb/2WeYEoCUefT/7P+JX//+Fyjf2Fr/6//j8an/5oyLt//9pakxBTUUzLjk5LjWq/+MYxAsAAANIAcAAAKqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqqq",
+    coin:"/+MYxAAM4AL+WUEYApJJIw7dQAfB8HwfAgIAgCBxYPg+flAQDGJwf+D+CAIYPn/g4GMQA+/AjuD/BwEO/o//4gVDGX/KVDf5/+MYxAcOAq7cAYKIAIpQv+kkXjEukB/+kQ4EMBvCZE8XkUVhqQ7y4rooE19FSSVv///////////mA8t/9zH//////9TTTjlG/+MYxAoMwR4kAcd4AKD0SSgCgAoieUUNOnS8JUJssn8XJRXVqtigyCp2V6n//////8S4NFQWTEFNRTMuOTkuNVVVVVVVVVVV"
+};
 setInterval(function() {
     Update();
   }, 50);
-//#endregion keys
-Run();
